@@ -94,12 +94,12 @@ export default function WalkieTalkieMode({
     }
   }, [])
 
-  // Watch isLoading to transition from generating → done
+  // When generation completes, exit walkie talkie mode
   useEffect(() => {
     if (phase === 'generating' && !isLoading) {
-      setPhase('done')
+      onExit()
     }
-  }, [isLoading, phase])
+  }, [isLoading, phase, onExit])
 
   const startRecording = useCallback(() => {
     if (!recognitionRef.current || phase !== 'idle') return
