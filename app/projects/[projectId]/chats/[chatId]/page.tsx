@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useAction } from 'convex/react'
 import { api } from '../../../../../convex/_generated/api'
 import { useSession } from '../../../../../lib/hooks/useSession'
 import { useApiValidation } from '../../../../../lib/hooks/useApiValidation'
 import PromptComponent from '../../../../components/prompt-component'
+import WalkieTalkieMode from '../../../../components/walkie-talkie-mode'
 import ApiKeyError from '../../../../components/api-key-error'
 import RateLimitDialog from '../../../../components/rate-limit-dialog'
 import ErrorDialog from '../../../../components/error-dialog'
@@ -14,10 +15,12 @@ import ErrorDialog from '../../../../components/error-dialog'
 export default function ChatPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const v0ProjectId = params.projectId as string
   const v0ChatId = params.chatId as string
   const sessionId = useSession()
 
+  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(searchParams.get('wt') === '1')
   const [isLoading, setIsLoading] = useState(false)
   const [generatedApp, setGeneratedApp] = useState<string | null>(null)
   const [chatData, setChatData] = useState<any>(null)
@@ -113,7 +116,8 @@ export default function ChatPage() {
 
       if (isNewChat && data.id) {
         const newProjectId = data.projectId || v0ProjectId
-        router.replace(`/projects/${newProjectId}/chats/${data.id}`)
+        const wtParam = isWalkieTalkieMode ? '?wt=1' : ''
+        router.replace(`/projects/${newProjectId}/chats/${data.id}${wtParam}`)
         return
       }
 
@@ -184,32 +188,45 @@ export default function ChatPage() {
 
   return (
     <div className="relative min-h-dvh bg-background">
-      <div className="absolute inset-0 overflow-hidden">
-        {generatedApp ? (
-          <div className="w-full h-full bg-white">
-            {generatedApp.startsWith('http') ? (
-              <iframe src={generatedApp} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-top-navigation-by-user-activation allow-pointer-lock" />
-            ) : (
-              <iframe srcDoc={generatedApp} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-pointer-lock" />
-            )}
+      {isWalkieTalkieMode ? (
+        <WalkieTalkieMode
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          generatedApp={generatedApp}
+          chatData={mergedChatData}
+          onExit={() => setIsWalkieTalkieMode(false)}
+        />
+      ) : (
+        <>
+          <div className="absolute inset-0 overflow-hidden">
+            {generatedApp ? (
+              <div className="w-full h-full bg-white">
+                {generatedApp.startsWith('http') ? (
+                  <iframe src={generatedApp} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-top-navigation-by-user-activation allow-pointer-lock" />
+                ) : (
+                  <iframe srcDoc={generatedApp} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-pointer-lock" />
+                )}
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </div>
 
-      <PromptComponent
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        placeholder={v0ChatId !== 'new' && v0ChatId !== 'new-chat' ? 'Refine your app...' : 'Describe your app...'}
-        showDropdowns={!!projects && !!convexChats}
-        projects={projectsList}
-        projectChats={chatsList}
-        currentProjectId={v0ProjectId}
-        currentChatId={v0ChatId}
-        chatData={mergedChatData}
-        onDeleteChat={handleDeleteChat}
-        onRenameChat={handleRenameChat}
-        onDeploy={handleDeploy}
-      />
+          <PromptComponent
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            placeholder={v0ChatId !== 'new' && v0ChatId !== 'new-chat' ? 'Refine your app...' : 'Describe your app...'}
+            showDropdowns={!!projects && !!convexChats}
+            projects={projectsList}
+            projectChats={chatsList}
+            currentProjectId={v0ProjectId}
+            currentChatId={v0ChatId}
+            chatData={mergedChatData}
+            onDeleteChat={handleDeleteChat}
+            onRenameChat={handleRenameChat}
+            onDeploy={handleDeploy}
+            onToggleWalkieTalkieMode={() => setIsWalkieTalkieMode(true)}
+          />
+        </>
+      )}
 
       <RateLimitDialog isOpen={showRateLimitDialog} onClose={() => setShowRateLimitDialog(false)} resetTime={rateLimitInfo.resetTime} remaining={rateLimitInfo.remaining} />
       <ErrorDialog isOpen={showErrorDialog} onClose={() => setShowErrorDialog(false)} message={errorMessage} />

@@ -8,6 +8,7 @@ import {
   XIcon,
   PaperclipIcon,
   MicIcon,
+  RadioIcon,
 } from 'lucide-react'
 import { V0Logo } from '../../components/v0-logo'
 import SettingsDialog from './settings-dialog'
@@ -100,6 +101,7 @@ interface PromptComponentProps {
   onDeleteChat?: () => Promise<void>
   onRenameChat?: (newName: string) => Promise<void>
   onDeploy?: () => Promise<void>
+  onToggleWalkieTalkieMode?: () => void
 }
 
 export default function PromptComponent({
@@ -120,6 +122,7 @@ export default function PromptComponent({
   onDeleteChat,
   onRenameChat,
   onDeploy,
+  onToggleWalkieTalkieMode,
 }: PromptComponentProps) {
   const router = useRouter()
   const { settings } = useSettings()
@@ -536,6 +539,16 @@ export default function PromptComponent({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" side="top">
                               <SettingsDialog />
+
+                              {onToggleWalkieTalkieMode && (
+                                <>
+                                  <DropdownMenuItem onClick={onToggleWalkieTalkieMode}>
+                                    <RadioIcon className="mr-2 h-4 w-4" />
+                                    Walkie Talkie Mode
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
 
                               <DropdownMenuItem asChild>
                                 <a href={chatData?.v0Url || chatData?.url || 'https://v0.dev'} target="_blank" rel="noopener noreferrer" className="flex items-center">
