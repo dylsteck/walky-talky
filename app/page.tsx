@@ -7,6 +7,7 @@ import { api } from '../convex/_generated/api'
 import { useSession } from '../lib/hooks/useSession'
 import { useApiValidation } from '../lib/hooks/useApiValidation'
 import PromptComponent from './components/prompt-component'
+import WalkieTalkieMode from './components/walkie-talkie-mode'
 import ApiKeyError from './components/api-key-error'
 import RateLimitDialog from './components/rate-limit-dialog'
 import ErrorDialog from './components/error-dialog'
@@ -14,7 +15,9 @@ import ErrorDialog from './components/error-dialog'
 export default function HomePage() {
   const router = useRouter()
   const sessionId = useSession()
+  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [generatedApp, setGeneratedApp] = useState<string | null>(null)
   const [showRateLimitDialog, setShowRateLimitDialog] = useState(false)
   const [rateLimitInfo, setRateLimitInfo] = useState<{ resetTime?: string; remaining?: number }>({})
   const [showErrorDialog, setShowErrorDialog] = useState(false)
@@ -53,7 +56,8 @@ export default function HomePage() {
       }
 
       if (data.id && data.projectId) {
-        router.push(`/projects/${data.projectId}/chats/${data.id}`)
+        const wtParam = isWalkieTalkieMode ? '?wt=1' : ''
+        router.push(`/projects/${data.projectId}/chats/${data.id}${wtParam}`)
       }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Failed to generate app.')
@@ -69,31 +73,44 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-dvh bg-background">
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center px-4 sm:px-6" style={{ transform: 'translateY(-25%)' }}>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4 text-pretty">
-            Walky Talky
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-            AI-powered app builder using the{' '}
-            <a href="https://v0.dev/docs/api/platform" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-muted-foreground underline">
-              v0 Platform API
-            </a>
-            . Describe your app and see it generated instantly.
-          </p>
-        </div>
-      </div>
+      {isWalkieTalkieMode ? (
+        <WalkieTalkieMode
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          generatedApp={generatedApp}
+          chatData={null}
+          onExit={() => setIsWalkieTalkieMode(false)}
+        />
+      ) : (
+        <>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center px-4 sm:px-6" style={{ transform: 'translateY(-25%)' }}>
+              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4 text-pretty">
+                Walky Talky
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
+                AI-powered app builder using the{' '}
+                <a href="https://v0.dev/docs/api/platform" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-muted-foreground underline">
+                  v0 Platform API
+                </a>
+                . Describe your app and see it generated instantly.
+              </p>
+            </div>
+          </div>
 
-      <PromptComponent
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        placeholder="Describe your app..."
-        showDropdowns={!!projects}
-        projects={projectsList}
-        projectChats={[]}
-        currentProjectId="new"
-        currentChatId="new"
-      />
+          <PromptComponent
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            placeholder="Describe your app..."
+            showDropdowns={!!projects}
+            projects={projectsList}
+            projectChats={[]}
+            currentProjectId="new"
+            currentChatId="new"
+            onToggleWalkieTalkieMode={() => setIsWalkieTalkieMode(true)}
+          />
+        </>
+      )}
 
       <RateLimitDialog isOpen={showRateLimitDialog} onClose={() => setShowRateLimitDialog(false)} resetTime={rateLimitInfo.resetTime} remaining={rateLimitInfo.remaining} />
       <ErrorDialog isOpen={showErrorDialog} onClose={() => setShowErrorDialog(false)} message={errorMessage} />
