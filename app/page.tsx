@@ -15,7 +15,7 @@ import ErrorDialog from './components/error-dialog'
 export default function HomePage() {
   const router = useRouter()
   const sessionId = useSession()
-  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(false)
+  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [generatedApp, setGeneratedApp] = useState<string | null>(null)
   const [showRateLimitDialog, setShowRateLimitDialog] = useState(false)

@@ -20,7 +20,8 @@ export default function ChatPage() {
   const v0ChatId = params.chatId as string
   const sessionId = useSession()
 
-  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(searchParams.get('wt') === '1')
+  const isNewChat = v0ChatId === 'new' || v0ChatId === 'new-chat'
+  const [isWalkieTalkieMode, setIsWalkieTalkieMode] = useState(isNewChat || searchParams.get('wt') === '1')
   const [isLoading, setIsLoading] = useState(false)
   const [generatedApp, setGeneratedApp] = useState<string | null>(null)
   const [chatData, setChatData] = useState<any>(null)
